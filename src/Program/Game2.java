@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Objects;
 
 // lvl 1: 8x8 10 bombs
 // lvl 2: 16x16 40 bombs
@@ -61,13 +62,17 @@ public class Game2 extends JFrame {
                 cells.get(i).get(j).addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        if (e.getButton() == MouseEvent.BUTTON1) // left click
+                        if (e.getButton() == MouseEvent.BUTTON1) {// left click
                             if (!first_click)
                                 game_lasts = board.mark(finalI, finalJ, "x");
                             else {
                                 board.createBoard(finalI, finalJ);
                                 first_click = false;
                             }
+                            if (!board.getBoard().get(finalI).get(finalJ).equals("p") & !board.getBoard().get(finalI).get(finalJ).equals("?"))
+                                cells.get(finalI).get(finalJ).setEnabled(false);
+                            refreshBoard();
+                        }
                         else if (e.getButton() == MouseEvent.BUTTON3) // right click
                             board.mark(finalI, finalJ, "r");
 
@@ -93,6 +98,21 @@ public class Game2 extends JFrame {
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
+    }
+
+    public void refreshBoard() {
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                cells.get(i).get(j).setText(board.getBoard().get(i).get(j));
+        if (!game_lasts) {
+            System.out.println("YOU LOST!");
+            board.uncoverAll();
+            game_lasts = true;
+            for (int i = 0; i < m; i++)
+                for (int j = 0; j < n; j++)
+                    cells.get(i).get(j).setEnabled(false);
+            refreshBoard();
+        }
     }
 
 }
