@@ -83,11 +83,8 @@ public class Board {
             return temp >= 0;
         }
 
-        else if (marking_type.equals("?"))
-            return board.get(x).get(y).questionCell() == 1;
-
         else
-            return board.get(x).get(y).flagCell() == 1;
+            return board.get(x).get(y).rightClickCell() == 1;
     }
 
     public ArrayList<ArrayList<String>> getBoard() {

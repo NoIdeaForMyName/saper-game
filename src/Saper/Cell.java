@@ -54,15 +54,16 @@ public class Cell {
         return crossed_cells;
     }
 
-    public int questionCell() {
-        if (show_content != 't')
-            show_content = (show_content == '?' ? 'f':'?');
-        return 1;
-    }
-
-    public int flagCell() {
-        if (show_content != 't')
-            show_content = (show_content == 'p' ? 'f':'p');
+    public int rightClickCell() {
+        if (show_content != 't') {
+            if (show_content == 'f')
+                show_content = 'p';
+            else if (show_content == 'p')
+                show_content = '?';
+            else
+                show_content = 'f';
+            //show_content = (show_content == '?' ? 'f' : '?');
+        }
         return 1;
     }
 
@@ -71,20 +72,10 @@ public class Cell {
             if (surrounding_bombs != 0)
                 return String.valueOf(surrounding_bombs);
             else
-                return " ";
+                return "0";
         }
-
-        else if (show_content == '?')
-            return String.valueOf(show_content);
-
-        else if (show_content == 'p')
-            return "⚑";
-
-        else if (show_content == 'x')
-            return "x";
-
         else
-            return "■";
+            return String.valueOf(show_content);
     }
 
     public void uncover() {
