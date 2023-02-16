@@ -69,8 +69,6 @@ public class Game2 extends JFrame {
                                 board.createBoard(finalI, finalJ);
                                 first_click = false;
                             }
-                            if (!board.getBoard().get(finalI).get(finalJ).equals("p") & !board.getBoard().get(finalI).get(finalJ).equals("?"))
-                                cells.get(finalI).get(finalJ).setEnabled(false);
                             refreshBoard();
                         }
                         else if (e.getButton() == MouseEvent.BUTTON3) // right click
@@ -102,8 +100,11 @@ public class Game2 extends JFrame {
 
     public void refreshBoard() {
         for (int i = 0; i < m; i++)
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < n; j++) {
                 cells.get(i).get(j).setText(board.getBoard().get(i).get(j));
+                if (!board.getBoard().get(i).get(j).equals("p") & !board.getBoard().get(i).get(j).equals("?") & !board.getBoard().get(i).get(j).equals("f"))
+                    cells.get(i).get(j).setEnabled(false);
+            }
         if (!game_lasts) {
             System.out.println("YOU LOST!");
             board.uncoverAll();
