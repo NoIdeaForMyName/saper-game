@@ -36,7 +36,7 @@ public class Cell {
         int crossed_cells = 1;
 
         if (bomb) {
-            show_content = 'x';
+            show_content = 'z'; //z-crossed cell with bomb so it explodes
             return -1;
         }
 
@@ -80,8 +80,12 @@ public class Cell {
 
     public void uncover() {
         if (!bomb)
-            show_content = 't';
+            if (show_content == 'p')
+                show_content = 'w'; //w-wrong (flagged cell without bomb)
+            else
+                show_content = 't';
         else
-            show_content = 'x';
+            if (show_content != 'z')
+                show_content = 'x';
     }
 }

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class Init extends JFrame implements ActionListener {
 
@@ -60,6 +61,10 @@ public class Init extends JFrame implements ActionListener {
             lvl = 3;
         }
         dispose();
-        new Game2(lvl);
+        try {
+            new Game(lvl);
+        } catch (IOException exception) {
+            System.out.println(exception.getMessage());
+        }
     }
 }
