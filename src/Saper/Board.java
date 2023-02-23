@@ -11,6 +11,7 @@ public class Board {
     private final int n;
     private final int bomb_nb;
     private int to_cross_nb;
+    private int flagged = 0;
 
     public Board(int m, int n, int bomb_nb) {
 
@@ -83,8 +84,14 @@ public class Board {
             return temp >= 0;
         }
 
-        else
-            return board.get(x).get(y).rightClickCell() == 1;
+        else {
+            String content = board.get(x).get(y).rightClickCell();
+            if (content.equals("p"))
+                flagged++;
+            else if (content.equals("?"))
+                flagged--;
+            return true;
+        }
     }
 
     public ArrayList<ArrayList<String>> getBoard() {
@@ -100,6 +107,10 @@ public class Board {
 
         }
         return b;
+    }
+
+    public int getFlagged() {
+        return flagged;
     }
 
     public boolean gameLast() {

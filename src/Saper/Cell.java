@@ -54,7 +54,7 @@ public class Cell {
         return crossed_cells;
     }
 
-    public int rightClickCell() {
+    public String rightClickCell() {
         if (show_content != 't') {
             if (show_content == 'f')
                 show_content = 'p';
@@ -64,7 +64,7 @@ public class Cell {
                 show_content = 'f';
             //show_content = (show_content == '?' ? 'f' : '?');
         }
-        return 1;
+        return Character.toString(show_content);
     }
 
     public String getCellValue() {
@@ -87,5 +87,10 @@ public class Cell {
         else
             if (show_content != 'z')
                 show_content = 'x';
+    }
+
+    @Override
+    public String toString() {
+        return Character.toString(show_content);
     }
 }

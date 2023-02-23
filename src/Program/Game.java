@@ -19,9 +19,6 @@ import java.util.*;
 // new Board, createBoard, displayBoard, gameLast, mark
 
 public class Game extends JFrame {
-    //what to do:
-    //niech zlicza flagi
-    //jak wygrasz a nie zaflagujesz wszystkiego to ma wszystko zaflagowac co trzeba, i ustawic pozostale bomby na 0 z automatu
 
     private Board board;
     private int m;
@@ -58,91 +55,20 @@ public class Game extends JFrame {
 
     public Game(int lvl) throws IOException {
 
-        timer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                game_time++;
-                timeCounterPanel.number = game_time;
-                timeCounterPanel.repaint();
-            }
+        timer = new Timer(1000, e -> {
+            game_time++;
+            timeCounterPanel.number = game_time;
+            timeCounterPanel.repaint();
         });
 
-        //sprite:
-        BufferedImage sprite = ImageIO.read(new File("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\sprite.png"));
-
-        int x_pos = 0;
-        int y_pos = 0; // 46
-        int size_x = 25; // 31 31 51
-        int size_y = 45; // 31
-        ImageIcon[] temp = clock_nb;
-
-        for (int row = 0; row < 5; row++) {
-            switch (row) {
-                case 0 -> {}
-                case 1 -> {
-                    x_pos = 0;
-                    y_pos = 46;
-                    size_x = 31;
-                    size_y = 31;
-                    temp = numbers;
-                }
-                case 2 -> {
-                    x_pos = 0;
-                    y_pos = 78;
-                    size_x = 31;
-                    size_y = 31;
-                    temp = symbols;
-                }
-                case 3 -> {
-                    x_pos = 0;
-                    y_pos = 110;
-                    size_x = 51;
-                    size_y = 51;
-                    temp = emoji;
-                }
-                case 4 -> {
-                    x_pos = 268;
-                    y_pos = 78;
-                    size_x = 19;
-                    size_y = 63;
-                    temp = borders;
-                }
-            }
-            for (int i = 0; i < temp.length; i++) {
-
-                if (temp == borders & i != 0) {
-
-                    size_x = 19;
-
-                    x_pos = (size_x + 1) * (i - 1);
-                    if (i > 5)
-                        x_pos += 12;
-
-
-                    if (i == 5) {
-                        size_x = 31;
-                    }
-
-                    y_pos = 162;
-                    size_y = 19;
-                }
-
-                BufferedImage image = new BufferedImage(size_x, size_y, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g = image.createGraphics();
-                g.drawImage(sprite, 0, 0, size_x, size_y, x_pos, y_pos, x_pos + size_x, y_pos + size_y, null);
-                g.dispose();
-                temp[i] = new ImageIcon(image);
-                x_pos += size_x + 1;
-            }
-        }
-        // end sprite
+        initialize_sprite();
 
         // initiating board
         switch (lvl) {
             case 1 -> {
                 m = 8;
                 n = 8;
-                bomb_nb = 3; // 10
+                bomb_nb = 10;
             }
             case 2 -> {
                 m = 16;
@@ -168,33 +94,35 @@ public class Game extends JFrame {
             cells.add(new ArrayList<>());
             for (int j = 0; j < n; j++) {
                 cells.get(i).add(new MyButton(symbols[0], i, j));
-                //cells.get(i).get(j).setRolloverEnabled(false); //backlight disabled
 
                 cells.get(i).get(j).addMouseListener(new MouseAdapter() {
 
                     @Override
                     public void mouseReleased(MouseEvent e) {
-                        clicked = false;
-                        emojiButton.setIcon(emoji[0]);
-                        if (temp_button != null & board.gameLast()) {
-                            if (e.getButton() == MouseEvent.BUTTON1) {// left click
-                                if (!first_click)
-                                    won = board.mark(temp_button.i, temp_button.j, "x");
-                                else {
-                                    board.createBoard(temp_button.i, temp_button.j);
-                                    first_click = false;
-                                    game_time = -1;
-                                    timer.setInitialDelay(0);
-                                    timer.start();
+                        if (board.gameLast()) {
+                            clicked = false;
+                            emojiButton.setIcon(emoji[0]);
+                            if (temp_button != null) {
+                                if (e.getButton() == MouseEvent.BUTTON1) {// left click
+                                    if (!first_click)
+                                        won = board.mark(temp_button.i, temp_button.j, "x");
+                                    else {
+                                        board.createBoard(temp_button.i, temp_button.j);
+                                        first_click = false;
+                                        game_time = -1;
+                                        timer.setInitialDelay(0);
+                                        timer.start();
+                                    }
+                                    refreshBoard();
+                                } else if (e.getButton() == MouseEvent.BUTTON3 & !first_click) { // right click
+                                    board.mark(temp_button.i, temp_button.j, "r");
+                                    setCellIcon(temp_button);
+                                    bombCounterPanel.number = (bomb_nb - board.getFlagged());
+                                    bombCounterPanel.repaint();
                                 }
-                                refreshBoard();
-                            }
-                            else if (e.getButton() == MouseEvent.BUTTON3 & !first_click) { // right click
-                                board.mark(temp_button.i, temp_button.j, "r");
-                                setCellIcon(temp_button);
-                            }
 
-                            //setCellIcon(temp_button);
+                                //setCellIcon(temp_button);
+                            }
                         }
                     }
 
@@ -218,7 +146,7 @@ public class Game extends JFrame {
 
                     @Override
                     public void mousePressed(MouseEvent e) {
-                        if (e.getButton() == MouseEvent.BUTTON1) {
+                        if (e.getButton() == MouseEvent.BUTTON1 & board.gameLast()) {
                             clicked = true;
                             //set temp_button icon on clicked
                             setCellIcon(temp_button);
@@ -294,15 +222,27 @@ public class Game extends JFrame {
 
     public void refreshBoard() {
 
-        if (!board.gameLast() | !won) {
+        if (!board.gameLast() | !won) { //game is over...
             timer.stop();
 
             if (board.gameLast()) {// if you have lost:
                 board.uncoverAll();
                 emojiButton.setIcon(emoji[3]);
             }
-            else // if you have won
+            else {// if you have won:
                 emojiButton.setIcon(emoji[4]);
+                for (int i = 0; i < m; i++) {
+                    for (int j = 0; j < n; j++)
+                        if (board.getBoard().get(i).get(j).equals("f"))
+                            board.mark(i, j, "r");
+                        else if (board.getBoard().get(i).get(j).equals("?")) {
+                            board.mark(i, j, "r");
+                            board.mark(i, j, "r");
+                        }
+                }
+                bombCounterPanel.number = 0;
+                bombCounterPanel.repaint();
+            }
         }
 
         for (int i = 0; i < m; i++)
@@ -357,6 +297,76 @@ public class Game extends JFrame {
 
     }
 
+    public void initialize_sprite() throws IOException {
+        BufferedImage sprite = ImageIO.read(new File("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\sprite.png"));
+
+        int x_pos = 0;
+        int y_pos = 0; // 46
+        int size_x = 25; // 31 31 51
+        int size_y = 45; // 31
+        ImageIcon[] temp = clock_nb;
+
+        for (int row = 0; row < 5; row++) {
+            switch (row) {
+                case 0 -> {}
+                case 1 -> {
+                    x_pos = 0;
+                    y_pos = 46;
+                    size_x = 31;
+                    size_y = 31;
+                    temp = numbers;
+                }
+                case 2 -> {
+                    x_pos = 0;
+                    y_pos = 78;
+                    size_x = 31;
+                    size_y = 31;
+                    temp = symbols;
+                }
+                case 3 -> {
+                    x_pos = 0;
+                    y_pos = 110;
+                    size_x = 51;
+                    size_y = 51;
+                    temp = emoji;
+                }
+                case 4 -> {
+                    x_pos = 268;
+                    y_pos = 78;
+                    size_x = 19;
+                    size_y = 63;
+                    temp = borders;
+                }
+            }
+            for (int i = 0; i < temp.length; i++) {
+
+                if (temp == borders & i != 0) {
+
+                    size_x = 19;
+
+                    x_pos = (size_x + 1) * (i - 1);
+                    if (i > 5)
+                        x_pos += 12;
+
+
+                    if (i == 5) {
+                        size_x = 31;
+                    }
+
+                    y_pos = 162;
+                    size_y = 19;
+                }
+
+                BufferedImage image = new BufferedImage(size_x, size_y, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = image.createGraphics();
+                g.drawImage(sprite, 0, 0, size_x, size_y, x_pos, y_pos, x_pos + size_x, y_pos + size_y, null);
+                g.dispose();
+                temp[i] = new ImageIcon(image);
+                x_pos += size_x + 1;
+            }
+        }
+    }
+
     private class MyButton extends JButton {
 
         private int i;
@@ -388,6 +398,8 @@ public class Game extends JFrame {
                 board = new Board(m, n, bomb_nb);
                 won = true;
                 first_click = true;
+                bombCounterPanel.number = bomb_nb;
+                bombCounterPanel.repaint();
                 game_time = 0;
                 timeCounterPanel.number = game_time;
                 timeCounterPanel.repaint();
@@ -501,14 +513,24 @@ public class Game extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            ArrayList<String> numb_list = new ArrayList<>(Arrays.asList(Integer.toString(number).split("")));
-            LinkedList<Integer> number_deque = new LinkedList<>();
-            for (String nb : numb_list) number_deque.addLast(Integer.parseInt(nb));
-            while (number_deque.size() != 3) {
-                number_deque.addFirst(0);
+            //ArrayList<String> numb_list = new ArrayList<>(Arrays.asList(Integer.toString(number).split("")));
+            LinkedList<String> number_list = new LinkedList<>(Arrays.asList(Integer.toString(number).split("")));
+            //LinkedList<Integer> number_deque = new LinkedList<>();
+            //for (String nb : numb_list) number_deque.addLast(Integer.parseInt(nb));
+            while (number_list.size() != 3) {
+                if (number_list.getFirst().equals("-")) {
+                    number_list.set(0, "0");
+                    number_list.addFirst("-");
+                }
+                else
+                    number_list.addFirst("0");
             }
-            for (int i = 0; i < number_deque.size(); i++)
-                g.drawImage(clock_nb[number_deque.get(i)].getImage(), i * DIGIT_WIDTH, 0, null);
+            for (int i = 0; i < number_list.size(); i++) {
+                String index = number_list.get(i);
+                if (index.equals("-"))
+                    index = "10";
+                g.drawImage(clock_nb[Integer.parseInt(index)].getImage(), i * DIGIT_WIDTH, 0, null);
+            }
         }
     }
 
