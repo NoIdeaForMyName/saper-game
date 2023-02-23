@@ -4,13 +4,14 @@ import Saper.Board;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 
 // lvl 1: 8x8 10 bombs
 // lvl 2: 16x16 40 bombs
@@ -26,28 +27,44 @@ public class Game extends JFrame {
     private int bomb_nb;
     private boolean won;
     private boolean first_click = true;
+    private boolean clicked = false;
 
     private JPanel statsPanel = new JPanel();
     private JPanel boardPanel = new JPanel();
     private JPanel borderBoardPanel;
     private JPanel borderStatsPanel;
+    private CounterPanel bombCounterPanel;
+    private CounterPanel timeCounterPanel;
     private JPanel mainPanel = new JPanel();
     private JButton emojiButton = new JButton();
-    private ArrayList<ArrayList<JButton>> cells = new ArrayList<>();
-    private JButton[] temp_button = new JButton[1];
+    private ArrayList<ArrayList<MyButton>> cells = new ArrayList<>();
+    private MyButton temp_button;
     private final int CELL_SIZE = 31; // 30 is good
     private final int EMOJI_SIZE = 51;
-    private final int STATS_HEIGHT = 61;
+    private final int STATS_HEIGHT = 61; //61
     private final int BORDER_WIDTH = 19; // 20
     private int BOARD_WIDTH;
     private int BOARD_HEIGHT;
+    private int game_time;
+    private Timer timer;
 
     private final ImageIcon[] clock_nb = new ImageIcon[11];
     private final ImageIcon[] numbers = new ImageIcon[9];
     private final ImageIcon[] symbols = new ImageIcon[7];
     private final ImageIcon[] emoji = new ImageIcon[5];
     private final ImageIcon[] borders = new ImageIcon[8];
+
     public Game(int lvl) throws IOException {
+
+        timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                game_time++;
+                timeCounterPanel.number = game_time;
+                timeCounterPanel.repaint();
+                System.out.println(game_time);
+            }
+        });
 
         //sprite:
         BufferedImage sprite = ImageIO.read(new File("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\sprite.png"));
@@ -149,40 +166,59 @@ public class Game extends JFrame {
         for (int i = 0; i < m; i++) {
             cells.add(new ArrayList<>());
             for (int j = 0; j < n; j++) {
-                cells.get(i).add(new JButton(symbols[0]));
-                cells.get(i).get(j).setRolloverEnabled(false); //backlight disabled
+                cells.get(i).add(new MyButton(symbols[0], i, j));
+                //cells.get(i).get(j).setRolloverEnabled(false); //backlight disabled
 
-                int finalI = i;
-                int finalJ = j;
                 cells.get(i).get(j).addMouseListener(new MouseAdapter() {
 
                     @Override
                     public void mouseReleased(MouseEvent e) {
-                        if (temp_button[0] == e.getSource()) {
+                        clicked = false;
+                        emojiButton.setIcon(emoji[0]);
+                        if (temp_button != null & board.gameLast()) {
                             if (e.getButton() == MouseEvent.BUTTON1) {// left click
                                 if (!first_click)
-                                    won = board.mark(finalI, finalJ, "x");
+                                    won = board.mark(temp_button.i, temp_button.j, "x");
                                 else {
-                                    board.createBoard(finalI, finalJ);
+                                    board.createBoard(temp_button.i, temp_button.j);
                                     first_click = false;
+                                    game_time = -1;
+                                    timer.setInitialDelay(0);
+                                    timer.start();
                                 }
                                 refreshBoard();
-                            } else if (e.getButton() == MouseEvent.BUTTON3) // right click
-                                board.mark(finalI, finalJ, "r");
+                            }
+                            else if (e.getButton() == MouseEvent.BUTTON3) // right click
+                                board.mark(temp_button.i, temp_button.j, "r");
 
-                            //((JButton) e.getSource()).setText(board.getBoard().get(finalI).get(finalJ));
-                            setCellIcon((JButton) e.getSource(), board.getBoard().get(finalI).get(finalJ));
+                            setCellIcon(temp_button);
                         }
                     }
 
                     @Override
+                    public void mouseEntered(MouseEvent e) {
+                        temp_button = (MyButton) e.getSource();
+                        // if clicked:                         //set temp_button icon on clicked
+                        if (clicked)
+                            setCellIcon(temp_button);
+                    }
+
+                    @Override
                     public void mouseExited(MouseEvent e) {
-                        temp_button[0] = null;
+                        if (clicked) {
+                            clicked = false;
+                            setCellIcon(temp_button);
+                            clicked = true;
+                        }
+                        temp_button = null;
                     }
 
                     @Override
                     public void mousePressed(MouseEvent e) {
-                        temp_button[0] = (JButton) e.getSource();
+                        clicked = true;
+                        //set temp_button icon on clicked
+                        setCellIcon(temp_button);
+                        emojiButton.setIcon(emoji[2]);
                     }
 
                 });
@@ -199,13 +235,40 @@ public class Game extends JFrame {
         borderBoardPanel.add(boardPanel);
         //end of adding...
 
+        emojiButton.addMouseListener(new EmojiListener());
         emojiButton.setPreferredSize(new Dimension(EMOJI_SIZE, EMOJI_SIZE));
         emojiButton.setIcon(emoji[0]);
 
+        bombCounterPanel = new CounterPanel(bomb_nb);
+        timeCounterPanel = new CounterPanel(game_time);
+
+        //centering everything in statsPanel...
+        JPanel emojiWrapperPanel = new JPanel();
+        emojiWrapperPanel.add(emojiButton);
+
+        JPanel bombWrapperPanel = new JPanel();
+        bombWrapperPanel.setLayout(new BoxLayout(bombWrapperPanel, BoxLayout.Y_AXIS));
+        bombWrapperPanel.add(Box.createVerticalGlue());
+        bombWrapperPanel.add(bombCounterPanel);
+
+        JPanel timeWrapperPanel = new JPanel();
+        timeWrapperPanel.setLayout(new BoxLayout(timeWrapperPanel, BoxLayout.Y_AXIS));
+        timeWrapperPanel.add(Box.createVerticalGlue());
+        timeWrapperPanel.add(timeCounterPanel);
+
+        statsPanel.setPreferredSize(new Dimension(BOARD_WIDTH - 20, STATS_HEIGHT)); //20 - gap between side components and borders of statsPanel
+        statsPanel.setLayout(new BorderLayout());
+
+        statsPanel.add(BorderLayout.WEST, bombWrapperPanel);
+        statsPanel.add(BorderLayout.CENTER, emojiWrapperPanel);
+        statsPanel.add(BorderLayout.EAST, timeWrapperPanel);
+        //end centering...
+
         //add borders to statsPanel...
         borderStatsPanel = new BSPanel(BOARD_WIDTH, STATS_HEIGHT);
-        borderStatsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, (BOARD_WIDTH+2*BORDER_WIDTH-EMOJI_SIZE)/2, (STATS_HEIGHT+2*BORDER_WIDTH-EMOJI_SIZE)/2));
-        borderStatsPanel.add(emojiButton);
+        //borderStatsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, (BOARD_WIDTH+2*BORDER_WIDTH-EMOJI_SIZE)/2, (STATS_HEIGHT+2*BORDER_WIDTH-EMOJI_SIZE)/2));
+        borderStatsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, (BOARD_WIDTH+2*BORDER_WIDTH-EMOJI_SIZE)/2, BORDER_WIDTH));
+        borderStatsPanel.add(statsPanel);
         //end adding...
 
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -227,37 +290,29 @@ public class Game extends JFrame {
 
         if (!board.gameLast() | !won) {
             System.out.println("GAME OVER!");
+            timer.stop();
 
             if (board.gameLast()) {// if you have lost:
-                System.out.println("YOU LOST!");
                 board.uncoverAll();
-//                for (int i = 0; i < m; i++)
-//                    for (int j = 0; j < n; j++)
-//                        cells.get(i).get(j).setEnabled(false);
+                emojiButton.setIcon(emoji[3]);
             }
-            else
-                System.out.println("YOU WON!");
-            //won = true;
-            //refreshBoard();
-
-            for (int i = 0; i < m; i++)
-                for (int j = 0; j < n; j++)
-                    //cells.get(i).get(j).setEnabled(false);
-                    System.out.println("odkomentuj to u gory!!!");
+            else // if you have won
+                emojiButton.setIcon(emoji[4]);
         }
 
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++) {
-                String temp_board_cell = board.getBoard().get(i).get(j);
-                setCellIcon(cells.get(i).get(j), temp_board_cell);
-                if (!temp_board_cell.equals("p") & !temp_board_cell.equals("?") & !temp_board_cell.equals("f"))
-                    //cells.get(i).get(j).setEnabled(false); //false !!!
-                    System.out.println("odkomentuj to u gory!!!"); //nalezy cos pozmieniac w MouseReleased bo jest problem z tym ze on i tak ma gdzies czy przycisk jest disabled czy nie
+                setCellIcon(cells.get(i).get(j));
             }
-
     }
 
-    public void setCellIcon(JButton button, String board_cell) { // p-flag; f-covered; ?-?; nb-nb; x-bomb
+    public void setCellIcon(MyButton button) { // p-flag; f-covered; ?-?; nb-nb; x-bomb
+
+        String board_cell;
+        if (!first_click)
+            board_cell = board.getBoard().get(button.i).get(button.j);
+        else
+            board_cell = "f";
 
         switch (board_cell) {
             case "p" -> {
@@ -265,8 +320,13 @@ public class Game extends JFrame {
                 button.setDisabledIcon(symbols[1]);
             }
             case "f" -> {
-                button.setIcon(symbols[0]);
-                button.setDisabledIcon(symbols[0]);
+                if (!clicked) {
+                    button.setIcon(symbols[0]);
+                    button.setDisabledIcon(symbols[0]);
+                }
+                else
+                    button.setIcon(numbers[0]);
+
             }
             case "?" -> {
                 button.setIcon((symbols[5]));
@@ -292,7 +352,62 @@ public class Game extends JFrame {
 
     }
 
-    class BBPanel extends JPanel {
+    private class MyButton extends JButton {
+
+        private int i;
+        private int j;
+        private MyButton(ImageIcon icon, int i, int j) {
+            setIcon(icon);
+            setRolloverEnabled(false);
+            this.i = i;
+            this.j = j;
+        }
+    }
+
+    private class EmojiListener implements MouseListener {
+
+        private boolean pressed = false;
+        @Override
+        public void mouseClicked(MouseEvent e) {}
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            emojiButton.setIcon(emoji[1]);
+            pressed = true;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (emojiButton.getIcon() == emoji[1]) {
+                //here the game will be reset:
+                board = new Board(m, n, bomb_nb);
+                won = true;
+                first_click = true;
+                //cover all
+                for (int i = 0; i < m; i++)
+                    for (int j = 0; j < n; j++)
+                        setCellIcon(cells.get(i).get(j));
+
+                //end cover all
+            }
+            emojiButton.setIcon(emoji[0]);
+            pressed = false;
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            if (pressed)
+                emojiButton.setIcon(emoji[1]);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            if (pressed)
+                emojiButton.setIcon(emoji[0]);
+        }
+    }
+
+    private class BBPanel extends JPanel { // Border Board Panel
 
         private int B_WIDTH;
         private int B_HEIGHT;
@@ -329,7 +444,7 @@ public class Game extends JFrame {
         }
     }
 
-    class BSPanel extends JPanel {
+    private class BSPanel extends JPanel { // Border Stats Panel
 
         private int S_WIDTH;
         private int S_HEIGHT;
@@ -361,6 +476,33 @@ public class Game extends JFrame {
 
         }
 
+    }
+
+    private class CounterPanel extends JPanel {
+
+        private final int DIGIT_WIDTH = 25; //77   bylo 26
+        private final int DIGIT_HEIGHT = 45; //45   bylo 46
+        private int number;
+
+        private CounterPanel(int number) {
+            setPreferredSize(new Dimension(DIGIT_WIDTH * 3, DIGIT_HEIGHT));
+            this.number = number;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            ArrayList<String> numb_list = new ArrayList<>(Arrays.asList(Integer.toString(number).split("")));
+            LinkedList<Integer> number_deque = new LinkedList<>();
+            for (String nb : numb_list) number_deque.addLast(Integer.parseInt(nb));
+            while (number_deque.size() != 3) {
+                number_deque.addFirst(0);
+            }
+            System.out.println(number_deque);
+            for (int i = 0; i < number_deque.size(); i++)
+                g.drawImage(clock_nb[number_deque.get(i)].getImage(), i * DIGIT_WIDTH, 0, null);
+        }
     }
 
 }

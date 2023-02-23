@@ -5,7 +5,7 @@ import Saper.Board;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class G {
+public class Ga {
 
     private static boolean invalidInput(String [] cord, int max_m, int max_n, boolean is_first) {
 
