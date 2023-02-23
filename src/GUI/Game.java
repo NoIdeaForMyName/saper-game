@@ -1,6 +1,6 @@
 package GUI;
 
-import Saper.Board;
+import Minesweeper.Board;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -157,7 +157,7 @@ public class Game extends JFrame {
         pack();
         setLocationRelativeTo(null);
         setResizable(false);
-        setTitle("Saper");
+        setTitle("Minesweeper");
         setIconImage(frame_icon.getImage());
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);

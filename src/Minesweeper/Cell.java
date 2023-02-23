@@ -1,4 +1,4 @@
-package Saper;
+package Minesweeper;
 
 import java.util.ArrayList;
 public class Cell {

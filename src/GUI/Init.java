@@ -41,7 +41,7 @@ public class Init extends JFrame implements ActionListener {
         setSize(new Dimension(400, 120));
         setLocationRelativeTo(null);
         setResizable(false);
-        setTitle("Saper by Michal Maksanty");
+        setTitle("Minesweeper by Michal Maksanty");
         setIconImage(frame_icon.getImage());
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
