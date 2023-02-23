@@ -58,6 +58,8 @@ public class Game extends JFrame {
 
         timer = new Timer(1000, e -> {
             game_time++;
+            if (game_time == 1000)
+                game_time = 0;
             timeCounterPanel.number = game_time;
             timeCounterPanel.repaint();
         });
@@ -390,8 +392,8 @@ public class Game extends JFrame {
                 first_click = true;
                 bombCounterPanel.number = bomb_nb;
                 bombCounterPanel.repaint();
-                game_time = 0;
-                timeCounterPanel.number = game_time;
+                timer.stop();
+                timeCounterPanel.number = 0;
                 timeCounterPanel.repaint();
                 //cover all
                 for (int i = 0; i < m; i++)
