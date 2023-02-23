@@ -5,7 +5,6 @@ import Saper.Board;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -20,6 +19,9 @@ import java.util.*;
 // new Board, createBoard, displayBoard, gameLast, mark
 
 public class Game extends JFrame {
+    //what to do:
+    //niech zlicza flagi
+    //jak wygrasz a nie zaflagujesz wszystkiego to ma wszystko zaflagowac co trzeba, i ustawic pozostale bomby na 0 z automatu
 
     private Board board;
     private int m;
@@ -62,7 +64,6 @@ public class Game extends JFrame {
                 game_time++;
                 timeCounterPanel.number = game_time;
                 timeCounterPanel.repaint();
-                System.out.println(game_time);
             }
         });
 
@@ -188,10 +189,12 @@ public class Game extends JFrame {
                                 }
                                 refreshBoard();
                             }
-                            else if (e.getButton() == MouseEvent.BUTTON3) // right click
+                            else if (e.getButton() == MouseEvent.BUTTON3 & !first_click) { // right click
                                 board.mark(temp_button.i, temp_button.j, "r");
+                                setCellIcon(temp_button);
+                            }
 
-                            setCellIcon(temp_button);
+                            //setCellIcon(temp_button);
                         }
                     }
 
@@ -215,10 +218,12 @@ public class Game extends JFrame {
 
                     @Override
                     public void mousePressed(MouseEvent e) {
-                        clicked = true;
-                        //set temp_button icon on clicked
-                        setCellIcon(temp_button);
-                        emojiButton.setIcon(emoji[2]);
+                        if (e.getButton() == MouseEvent.BUTTON1) {
+                            clicked = true;
+                            //set temp_button icon on clicked
+                            setCellIcon(temp_button);
+                            emojiButton.setIcon(emoji[2]);
+                        }
                     }
 
                 });
@@ -238,6 +243,7 @@ public class Game extends JFrame {
         emojiButton.addMouseListener(new EmojiListener());
         emojiButton.setPreferredSize(new Dimension(EMOJI_SIZE, EMOJI_SIZE));
         emojiButton.setIcon(emoji[0]);
+        emojiButton.setRolloverEnabled(false);
 
         bombCounterPanel = new CounterPanel(bomb_nb);
         timeCounterPanel = new CounterPanel(game_time);
@@ -289,7 +295,6 @@ public class Game extends JFrame {
     public void refreshBoard() {
 
         if (!board.gameLast() | !won) {
-            System.out.println("GAME OVER!");
             timer.stop();
 
             if (board.gameLast()) {// if you have lost:
@@ -383,6 +388,9 @@ public class Game extends JFrame {
                 board = new Board(m, n, bomb_nb);
                 won = true;
                 first_click = true;
+                game_time = 0;
+                timeCounterPanel.number = game_time;
+                timeCounterPanel.repaint();
                 //cover all
                 for (int i = 0; i < m; i++)
                     for (int j = 0; j < n; j++)
@@ -499,7 +507,6 @@ public class Game extends JFrame {
             while (number_deque.size() != 3) {
                 number_deque.addFirst(0);
             }
-            System.out.println(number_deque);
             for (int i = 0; i < number_deque.size(); i++)
                 g.drawImage(clock_nb[number_deque.get(i)].getImage(), i * DIGIT_WIDTH, 0, null);
         }
