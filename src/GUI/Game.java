@@ -1,10 +1,11 @@
-package Program;
+package GUI;
 
 import Saper.Board;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -16,15 +17,13 @@ import java.util.*;
 // lvl 2: 16x16 40 bombs
 // lvl 3: 30x16 99 bombs
 
-// new Board, createBoard, displayBoard, gameLast, mark
-
 public class Game extends JFrame {
 
     private Board board;
     private int m;
     private int n;
     private int bomb_nb;
-    private boolean won;
+    private boolean lost;
     private boolean first_click = true;
     private boolean clicked = false;
 
@@ -38,15 +37,17 @@ public class Game extends JFrame {
     private JButton emojiButton = new JButton();
     private ArrayList<ArrayList<MyButton>> cells = new ArrayList<>();
     private MyButton temp_button;
-    private final int CELL_SIZE = 31; // 30 is good
+    private final int CELL_SIZE = 31;
     private final int EMOJI_SIZE = 51;
-    private final int STATS_HEIGHT = 61; //61
-    private final int BORDER_WIDTH = 19; // 20
-    private int BOARD_WIDTH;
-    private int BOARD_HEIGHT;
+    private final int STATS_HEIGHT = 61;
+    private final int BORDER_WIDTH = 19;
+    private final int BOARD_WIDTH;
+    private final int BOARD_HEIGHT;
     private int game_time;
     private Timer timer;
 
+    private final Color bg_color = new Color(189, 189, 189);
+    private final ImageIcon frame_icon = new ImageIcon("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\icon.png");
     private final ImageIcon[] clock_nb = new ImageIcon[11];
     private final ImageIcon[] numbers = new ImageIcon[9];
     private final ImageIcon[] symbols = new ImageIcon[7];
@@ -86,7 +87,7 @@ public class Game extends JFrame {
         BOARD_HEIGHT = m * CELL_SIZE;
 
         board = new Board(m, n, bomb_nb);
-        won = true;
+        lost = false;
 
         boardPanel.setLayout(new GridLayout(m, n, 0, 0));
 
@@ -94,68 +95,7 @@ public class Game extends JFrame {
             cells.add(new ArrayList<>());
             for (int j = 0; j < n; j++) {
                 cells.get(i).add(new MyButton(symbols[0], i, j));
-
-                cells.get(i).get(j).addMouseListener(new MouseAdapter() {
-
-                    @Override
-                    public void mouseReleased(MouseEvent e) {
-                        if (board.gameLast()) {
-                            clicked = false;
-                            emojiButton.setIcon(emoji[0]);
-                            if (temp_button != null) {
-                                if (e.getButton() == MouseEvent.BUTTON1) {// left click
-                                    if (!first_click)
-                                        won = board.mark(temp_button.i, temp_button.j, "x");
-                                    else {
-                                        board.createBoard(temp_button.i, temp_button.j);
-                                        first_click = false;
-                                        game_time = -1;
-                                        timer.setInitialDelay(0);
-                                        timer.start();
-                                    }
-                                    refreshBoard();
-                                } else if (e.getButton() == MouseEvent.BUTTON3 & !first_click) { // right click
-                                    board.mark(temp_button.i, temp_button.j, "r");
-                                    setCellIcon(temp_button);
-                                    bombCounterPanel.number = (bomb_nb - board.getFlagged());
-                                    bombCounterPanel.repaint();
-                                }
-
-                                //setCellIcon(temp_button);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        temp_button = (MyButton) e.getSource();
-                        // if clicked:                         //set temp_button icon on clicked
-                        if (clicked)
-                            setCellIcon(temp_button);
-                    }
-
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        if (clicked) {
-                            clicked = false;
-                            setCellIcon(temp_button);
-                            clicked = true;
-                        }
-                        temp_button = null;
-                    }
-
-                    @Override
-                    public void mousePressed(MouseEvent e) {
-                        if (e.getButton() == MouseEvent.BUTTON1 & board.gameLast()) {
-                            clicked = true;
-                            //set temp_button icon on clicked
-                            setCellIcon(temp_button);
-                            emojiButton.setIcon(emoji[2]);
-                        }
-                    }
-
-                });
-
+                cells.get(i).get(j).addMouseListener(new ButtonListener());
                 boardPanel.add(cells.get(i).get(j));
             }
         }
@@ -179,16 +119,19 @@ public class Game extends JFrame {
         //centering everything in statsPanel...
         JPanel emojiWrapperPanel = new JPanel();
         emojiWrapperPanel.add(emojiButton);
+        emojiWrapperPanel.setBackground(bg_color);
 
         JPanel bombWrapperPanel = new JPanel();
         bombWrapperPanel.setLayout(new BoxLayout(bombWrapperPanel, BoxLayout.Y_AXIS));
         bombWrapperPanel.add(Box.createVerticalGlue());
         bombWrapperPanel.add(bombCounterPanel);
+        bombWrapperPanel.setBackground(bg_color);
 
         JPanel timeWrapperPanel = new JPanel();
         timeWrapperPanel.setLayout(new BoxLayout(timeWrapperPanel, BoxLayout.Y_AXIS));
         timeWrapperPanel.add(Box.createVerticalGlue());
         timeWrapperPanel.add(timeCounterPanel);
+        timeWrapperPanel.setBackground(bg_color);
 
         statsPanel.setPreferredSize(new Dimension(BOARD_WIDTH - 20, STATS_HEIGHT)); //20 - gap between side components and borders of statsPanel
         statsPanel.setLayout(new BorderLayout());
@@ -200,7 +143,6 @@ public class Game extends JFrame {
 
         //add borders to statsPanel...
         borderStatsPanel = new BSPanel(BOARD_WIDTH, STATS_HEIGHT);
-        //borderStatsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, (BOARD_WIDTH+2*BORDER_WIDTH-EMOJI_SIZE)/2, (STATS_HEIGHT+2*BORDER_WIDTH-EMOJI_SIZE)/2));
         borderStatsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, (BOARD_WIDTH+2*BORDER_WIDTH-EMOJI_SIZE)/2, BORDER_WIDTH));
         borderStatsPanel.add(statsPanel);
         //end adding...
@@ -214,7 +156,8 @@ public class Game extends JFrame {
         pack();
         setLocationRelativeTo(null);
         setResizable(false);
-        setTitle("Saper by Michal Maksanty");
+        setTitle("Saper");
+        setIconImage(frame_icon.getImage());
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -222,7 +165,7 @@ public class Game extends JFrame {
 
     public void refreshBoard() {
 
-        if (!board.gameLast() | !won) { //game is over...
+        if (!board.gameLast() | lost) { //game is over...
             timer.stop();
 
             if (board.gameLast()) {// if you have lost:
@@ -251,7 +194,7 @@ public class Game extends JFrame {
             }
     }
 
-    public void setCellIcon(MyButton button) { // p-flag; f-covered; ?-?; nb-nb; x-bomb
+    public void setCellIcon(MyButton button) { // p-flag; f-covered; ?-?; nb-nb; x-bomb WROC TO
 
         String board_cell;
         if (!first_click)
@@ -260,39 +203,26 @@ public class Game extends JFrame {
             board_cell = "f";
 
         switch (board_cell) {
-            case "p" -> {
-                button.setIcon(symbols[1]);
-                button.setDisabledIcon(symbols[1]);
-            }
+
+            case "p" -> button.setIcon(symbols[1]); //button.setDisabledIcon(symbols[1]);
+
             case "f" -> {
-                if (!clicked) {
-                    button.setIcon(symbols[0]);
-                    button.setDisabledIcon(symbols[0]);
-                }
+                if (!clicked)
+                    button.setIcon(symbols[0]); //button.setDisabledIcon(symbols[0]);
                 else
                     button.setIcon(numbers[0]);
 
             }
-            case "?" -> {
-                button.setIcon((symbols[5]));
-                button.setDisabledIcon(symbols[5]);
-            }
-            case "x" -> {
-                button.setIcon(symbols[4]);
-                button.setDisabledIcon(symbols[4]);
-            }
-            case "w" -> {
-                button.setIcon(symbols[3]);
-                button.setDisabledIcon(symbols[3]);
-            }
-            case "z" -> {
-                button.setIcon(symbols[2]);
-                button.setDisabledIcon(symbols[2]);
-            }
-            default -> {
-                button.setIcon(numbers[Integer.parseInt(board_cell)]);
-                button.setDisabledIcon(numbers[Integer.parseInt(board_cell)]);
-            }
+            case "?" -> button.setIcon((symbols[5])); //button.setDisabledIcon(symbols[5]);
+
+            case "x" -> button.setIcon(symbols[4]); //button.setDisabledIcon(symbols[4]);
+
+            case "w" -> button.setIcon(symbols[3]); //button.setDisabledIcon(symbols[3]);
+
+            case "z" -> button.setIcon(symbols[2]); //button.setDisabledIcon(symbols[2]);
+
+            default -> button.setIcon(numbers[Integer.parseInt(board_cell)]); //button.setDisabledIcon(numbers[Integer.parseInt(board_cell)]);
+
         }
 
     }
@@ -301,9 +231,9 @@ public class Game extends JFrame {
         BufferedImage sprite = ImageIO.read(new File("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\sprite.png"));
 
         int x_pos = 0;
-        int y_pos = 0; // 46
-        int size_x = 25; // 31 31 51
-        int size_y = 45; // 31
+        int y_pos = 0;
+        int size_x = 25;
+        int size_y = 45;
         ImageIcon[] temp = clock_nb;
 
         for (int row = 0; row < 5; row++) {
@@ -369,14 +299,74 @@ public class Game extends JFrame {
 
     private class MyButton extends JButton {
 
-        private int i;
-        private int j;
+        private final int i;
+        private final int j;
         private MyButton(ImageIcon icon, int i, int j) {
             setIcon(icon);
             setRolloverEnabled(false);
             this.i = i;
             this.j = j;
         }
+    }
+
+    private class ButtonListener implements MouseListener {
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (board.gameLast()) {
+                clicked = false;
+                emojiButton.setIcon(emoji[0]);
+                if (temp_button != null) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {// left click
+                        if (!first_click)
+                            lost = !board.mark(temp_button.i, temp_button.j, "x");
+                        else {
+                            board.createBoard(temp_button.i, temp_button.j);
+                            first_click = false;
+                            game_time = -1;
+                            timer.setInitialDelay(0);
+                            timer.start();
+                        }
+                        refreshBoard();
+                    } else if (e.getButton() == MouseEvent.BUTTON3 & !first_click) { // right click
+                        board.mark(temp_button.i, temp_button.j, "r");
+                        setCellIcon(temp_button);
+                        bombCounterPanel.number = (bomb_nb - board.getFlagged());
+                        bombCounterPanel.repaint();
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            temp_button = (MyButton) e.getSource();
+            if (clicked)
+                setCellIcon(temp_button);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            if (clicked) {
+                clicked = false;
+                setCellIcon(temp_button);
+                clicked = true;
+            }
+            temp_button = null;
+        }
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1 & board.gameLast()) {
+                clicked = true;
+                //set temp_button icon on clicked
+                setCellIcon(temp_button);
+                emojiButton.setIcon(emoji[2]);
+            }
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {}
+
     }
 
     private class EmojiListener implements MouseListener {
@@ -396,7 +386,7 @@ public class Game extends JFrame {
             if (emojiButton.getIcon() == emoji[1]) {
                 //here the game will be reset:
                 board = new Board(m, n, bomb_nb);
-                won = true;
+                lost = false;
                 first_click = true;
                 bombCounterPanel.number = bomb_nb;
                 bombCounterPanel.repaint();
@@ -429,8 +419,8 @@ public class Game extends JFrame {
 
     private class BBPanel extends JPanel { // Border Board Panel
 
-        private int B_WIDTH;
-        private int B_HEIGHT;
+        private final int B_WIDTH;
+        private final int B_HEIGHT;
 
         private BBPanel(int dim_x, int dim_y) {
             setPreferredSize(new Dimension(dim_x + 2*BORDER_WIDTH, dim_y + 2*BORDER_WIDTH));
@@ -442,8 +432,6 @@ public class Game extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // g.drawImage(image, 0, 0, null);
-            // borders[i] 0-pionowa 1-LG rog 2-PG rog 3-LD rog 4-PD rog 5-pozioma 6-L lacznik 7-P lacznik
             int amount_hor = (int) Math.ceil(((double) B_WIDTH)/borders[5].getIconWidth());
             int amount_ver = (int) Math.ceil(((double) B_HEIGHT)/borders[0].getIconHeight());
 
@@ -466,10 +454,11 @@ public class Game extends JFrame {
 
     private class BSPanel extends JPanel { // Border Stats Panel
 
-        private int S_WIDTH;
-        private int S_HEIGHT;
+        private final int S_WIDTH;
+        private final int S_HEIGHT;
 
         private BSPanel(int dim_x, int dim_y) {
+            setBackground(bg_color);
             setPreferredSize(new Dimension(dim_x + 2*BORDER_WIDTH, dim_y + BORDER_WIDTH));
             S_WIDTH = dim_x;
             S_HEIGHT = dim_y;
@@ -479,8 +468,6 @@ public class Game extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // g.drawImage(image, 0, 0, null);
-            // borders[i] 0-pionowa 1-LG rog 2-PG rog 3-LD rog 4-PD rog 5-pozioma 6-L lacznik 7-P lacznik
             int amount_hor = (int) Math.ceil(((double) S_WIDTH)/borders[5].getIconWidth());
             int amount_ver = (int) Math.ceil(((double) S_HEIGHT)/borders[0].getIconHeight());
 
@@ -500,12 +487,13 @@ public class Game extends JFrame {
 
     private class CounterPanel extends JPanel {
 
-        private final int DIGIT_WIDTH = 25; //77   bylo 26
-        private final int DIGIT_HEIGHT = 45; //45   bylo 46
+        private final int DIGIT_WIDTH = 25;
+        private final int DIGIT_HEIGHT = 45;
         private int number;
 
         private CounterPanel(int number) {
             setPreferredSize(new Dimension(DIGIT_WIDTH * 3, DIGIT_HEIGHT));
+            setBackground(bg_color);
             this.number = number;
         }
 
@@ -513,10 +501,7 @@ public class Game extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            //ArrayList<String> numb_list = new ArrayList<>(Arrays.asList(Integer.toString(number).split("")));
             LinkedList<String> number_list = new LinkedList<>(Arrays.asList(Integer.toString(number).split("")));
-            //LinkedList<Integer> number_deque = new LinkedList<>();
-            //for (String nb : numb_list) number_deque.addLast(Integer.parseInt(nb));
             while (number_list.size() != 3) {
                 if (number_list.getFirst().equals("-")) {
                     number_list.set(0, "0");

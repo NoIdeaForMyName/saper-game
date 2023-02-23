@@ -1,4 +1,4 @@
-package Program;
+package GUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +15,8 @@ public class Init extends JFrame implements ActionListener {
     JButton medium = new JButton("Intermediate");
     JButton hard = new JButton("Expert");
     JPanel buttonsPanel = new JPanel();
+
+    private final ImageIcon frame_icon = new ImageIcon("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\icon.png");
 
     public Init() {
 
@@ -40,6 +42,7 @@ public class Init extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
         setResizable(false);
         setTitle("Saper by Michal Maksanty");
+        setIconImage(frame_icon.getImage());
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
