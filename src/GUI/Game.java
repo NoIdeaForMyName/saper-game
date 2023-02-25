@@ -46,7 +46,7 @@ public class Game extends JFrame {
     private Timer timer;
 
     private final Color bg_color = new Color(189, 189, 189);
-    private final ImageIcon frame_icon = new ImageIcon("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\icon.png");
+    private final ImageIcon frame_icon = new ImageIcon("resources\\icon.png");
     private final ImageIcon[] clock_nb = new ImageIcon[11];
     private final ImageIcon[] numbers = new ImageIcon[9];
     private final ImageIcon[] symbols = new ImageIcon[7];
@@ -229,7 +229,8 @@ public class Game extends JFrame {
     }
 
     public void initialize_sprite() throws IOException {
-        BufferedImage sprite = ImageIO.read(new File("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\sprite.png"));
+
+        BufferedImage sprite = ImageIO.read(new File("resources\\sprite.png"));
 
         int x_pos = 0;
         int y_pos = 0;

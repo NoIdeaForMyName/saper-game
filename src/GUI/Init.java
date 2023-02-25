@@ -16,10 +16,9 @@ public class Init extends JFrame implements ActionListener {
     JButton hard = new JButton("Expert");
     JPanel buttonsPanel = new JPanel();
 
-    private final ImageIcon frame_icon = new ImageIcon("D:\\JAVA LABOLATORIA\\Cwiczenia 14.11.2022\\src\\resources\\icon.png");
+    private final ImageIcon frame_icon = new ImageIcon("resources\\icon.png");
 
     public Init() {
-
         easy.addActionListener(this);
         medium.addActionListener(this);
         hard.addActionListener(this);
