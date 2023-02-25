@@ -16,7 +16,7 @@ public class Init extends JFrame implements ActionListener {
     JButton hard = new JButton("Expert");
     JPanel buttonsPanel = new JPanel();
 
-    private final ImageIcon frame_icon = new ImageIcon("resources\\icon.png");
+    private final ImageIcon frame_icon = new ImageIcon(getClass().getClassLoader().getResource("icon.png"));
 
     public Init() {
         easy.addActionListener(this);

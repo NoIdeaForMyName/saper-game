@@ -10,6 +10,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 
 // lvl 1: 8x8 10 bombs
@@ -46,7 +48,7 @@ public class Game extends JFrame {
     private Timer timer;
 
     private final Color bg_color = new Color(189, 189, 189);
-    private final ImageIcon frame_icon = new ImageIcon("resources\\icon.png");
+    private final ImageIcon frame_icon = new ImageIcon(getClass().getClassLoader().getResource("icon.png"));
     private final ImageIcon[] clock_nb = new ImageIcon[11];
     private final ImageIcon[] numbers = new ImageIcon[9];
     private final ImageIcon[] symbols = new ImageIcon[7];
@@ -230,7 +232,13 @@ public class Game extends JFrame {
 
     public void initialize_sprite() throws IOException {
 
-        BufferedImage sprite = ImageIO.read(new File("resources\\sprite.png"));
+//        InputStream path = getClass().getClassLoader().getResourceAsStream("sprite.png");
+//        URL path2 = getClass().getClassLoader().getResource("sprite.png");
+//        System.out.println(path);
+//        System.out.println(path2);
+        BufferedImage sprite = ImageIO.read(getClass().getClassLoader().getResourceAsStream("sprite.png"));
+
+        //BufferedImage sprite = ImageIO.read(new File("resources\\sprite.png"));
 
         int x_pos = 0;
         int y_pos = 0;
