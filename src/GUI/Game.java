@@ -49,6 +49,7 @@ public class Game extends JFrame {
 
     private final Color bg_color = new Color(189, 189, 189);
     private final ImageIcon frame_icon = new ImageIcon(getClass().getClassLoader().getResource("icon.png"));
+    // without embed resources: frame_icon = new ImageIcon("resources\\icon.png");
     private final ImageIcon[] clock_nb = new ImageIcon[11];
     private final ImageIcon[] numbers = new ImageIcon[9];
     private final ImageIcon[] symbols = new ImageIcon[7];
@@ -232,13 +233,12 @@ public class Game extends JFrame {
 
     public void initialize_sprite() throws IOException {
 
-//        InputStream path = getClass().getClassLoader().getResourceAsStream("sprite.png");
-//        URL path2 = getClass().getClassLoader().getResource("sprite.png");
-//        System.out.println(path);
-//        System.out.println(path2);
-        BufferedImage sprite = ImageIO.read(getClass().getClassLoader().getResourceAsStream("sprite.png"));
+        //InputStream path = getClass().getClassLoader().getResourceAsStream("sprite.png");
 
-        //BufferedImage sprite = ImageIO.read(new File("resources\\sprite.png"));
+        BufferedImage sprite = ImageIO.read(getClass().getClassLoader().getResourceAsStream("sprite.png"));
+        //without embed resources: BufferedImage sprite = ImageIO.read(new File("resources\\sprite.png"));
+        //when you want embed resources you cannot create FileIO object from file within jar archive, you have to read
+        //this file using streams (InputStream object)
 
         int x_pos = 0;
         int y_pos = 0;
